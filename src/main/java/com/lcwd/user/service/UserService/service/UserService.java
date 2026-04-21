@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -14,25 +15,31 @@ public class UserService {
     @Autowired
     UserRepo userRepo;
 
-    User saveUser(User user){
+  public   User saveUser(User user){
+     String s = UUID.randomUUID().toString();
+     user.setId(s);
       return   userRepo.save(user);
     }
 
-    List<User> getAllUser(String name){
+   public List<User> getAllUser(){
        return userRepo.findAll();
     }
 
-    User findById(String id){
+   public User findById(String id){
         return userRepo.findById(id).orElseThrow(ResourceNotFoundException::new);
     }
-    User deleteById(String id){
+   public User deleteById(String id){
         return userRepo.findById(id).orElse(null);
     }
 
-    User updateUser(User user){
+   public User updateUser(User user){
         if (userRepo.findById(user.getId()).orElse(null) != null) {
             userRepo.delete(user);
         }
         return userRepo.save(user);
+    }
+
+    public User getUser(String userId) {
+      return userRepo.findById(userId).orElseThrow(ResourceNotFoundException::new);
     }
 }
