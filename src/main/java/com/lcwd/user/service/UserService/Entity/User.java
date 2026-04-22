@@ -3,6 +3,9 @@ package com.lcwd.user.service.UserService.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -15,8 +18,11 @@ public class User {
     @Column(nullable = false)
     private String id;
 
-    String name;
-    String email;
-    String about;
+   private String name;
+   private String email;
+   private String about;
+
+   @Transient
+   private List<Rating> ratings=new ArrayList<>();
 
 }
