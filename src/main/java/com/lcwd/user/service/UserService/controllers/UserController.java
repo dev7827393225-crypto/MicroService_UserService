@@ -26,7 +26,7 @@ public class UserController {
     public ResponseEntity<User> getSingleUser(@PathVariable String userId) {
         return ResponseEntity.ok(userService.findById(userId));
     }
-
+@GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUser());
     }
