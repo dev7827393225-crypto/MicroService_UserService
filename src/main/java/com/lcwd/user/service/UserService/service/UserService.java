@@ -1,63 +1,110 @@
 package com.lcwd.user.service.UserService.service;
 
+import com.lcwd.hotel.HotelService.entity.Hotel;
 import com.lcwd.user.service.UserService.Entity.Rating;
 import com.lcwd.user.service.UserService.Entity.User;
 import com.lcwd.user.service.UserService.exception.ResourceNotFoundException;
+import com.lcwd.user.service.UserService.external.services.HotelService;
 import com.lcwd.user.service.UserService.repository.UserRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-//import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
 
     @Autowired
-    UserRepo userRepo;
+    private UserRepo userRepo;
 
-    private Logger logger = LoggerFactory.getLogger(UserService.class);
     @Autowired
     private RestTemplate restTemplate;
 
-  public   User saveUser(User user){
-     String s = UUID.randomUUID().toString();
-     user.setId(s);
-      return   userRepo.save(user);
-    }
+    @Autowired
+    private HotelService hotelService;
 
-   public List<User> getAllUser(){
-       return userRepo.findAll();
-    }
+    private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-   public User findById(String id){
 
-        User user=userRepo.findById(id).orElseThrow(ResourceNotFoundException::new);
-
-       ArrayList<Rating> ratingsOfUsers = restTemplate.getForObject("http://localhost:8083/ratings/users/"+user.getId(), ArrayList.class);
-       logger.info("{}",ratingsOfUsers);
-
-       user.setRatings(ratingsOfUsers);
-        return user;
-    }
-
-   public User deleteById(String id){
-        return userRepo.findById(id).orElse(null);
-    }
-
-   public User updateUser(User user){
-        if (userRepo.findById(user.getId()).orElse(null) != null) {
-            userRepo.delete(user);
-        }
+    public User saveUser(User user) {
+        String id = UUID.randomUUID().toString();
+        user.setId(id);
         return userRepo.save(user);
     }
 
-    public User getUser(String userId) {
-      return userRepo.findById(userId).orElseThrow(ResourceNotFoundException::new);
+
+    public List<User> getAllUser() {
+        return userRepo.findAll();
+    }
+
+
+    public User findById(String id) {
+        // 1. Fetch user or throw 404
+        User user = userRepo.findById(id)
+                .orElseThrow(ResourceNotFoundException::new);
+
+
+        logger.info("Fetching ratings for userId: {}", user.getId());
+        Rating[] ratingsOfUsers = restTemplate.getForObject(
+                "http://RATING-SERVICE/ratings/users/" + user.getId(),
+                Rating[].class
+        );
+
+
+        if (ratingsOfUsers == null) {
+            logger.warn("No ratings returned for userId: {}", user.getId());
+            user.setRatings(new ArrayList<>());
+            return user;
+        }
+
+        logger.info("Ratings fetched: {}", ratingsOfUsers.length);
+
+
+        List<Rating> ratingList = Arrays.stream(ratingsOfUsers)
+                .map(rating -> {
+
+                    logger.info("Fetching hotel for hotelId: {}", rating.getHotelId());
+//                    ResponseEntity<Hotel> forEntity = restTemplate.getForEntity(
+//                            "http://HOTELSERVICE/hotels/" + rating.getHotelId(),
+//                            Hotel.class
+//                    );
+
+                    com.lcwd.user.service.UserService.Entity.Hotel hotel = hotelService.getHotel(rating.getHotelId());
+                    rating.setHotel(hotel);
+                    return rating;
+                })
+                .collect(Collectors.toList());
+
+        user.setRatings(ratingList);
+        return user;
+    }
+
+
+    public User deleteById(String id) {
+        User user = userRepo.findById(id)
+                .orElseThrow(ResourceNotFoundException::new);
+        userRepo.deleteById(id);
+        return user;
+    }
+
+
+    public User updateUser(User user) {
+        // Ensure the user exists before updating
+        userRepo.findById(user.getId())
+                .orElseThrow(ResourceNotFoundException::new);
+        return userRepo.save(user);
+    }
+
+    public User getUserBasic(String userId) {
+        return userRepo.findById(userId)
+                .orElseThrow(ResourceNotFoundException::new);
     }
 }
