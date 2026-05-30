@@ -1,6 +1,6 @@
 package com.lcwd.user.service.UserService.service;
 
-import com.lcwd.hotel.HotelService.entity.Hotel;
+//import com.lcwd.hotel.HotelService.entity.Hotel;
 import com.lcwd.user.service.UserService.Entity.Rating;
 import com.lcwd.user.service.UserService.Entity.User;
 import com.lcwd.user.service.UserService.exception.ResourceNotFoundException;
@@ -9,6 +9,7 @@ import com.lcwd.user.service.UserService.repository.UserRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +27,7 @@ public class UserService {
     private UserRepo userRepo;
 
     @Autowired
+    @LoadBalanced
     private RestTemplate restTemplate;
 
     @Autowired

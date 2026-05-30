@@ -2,6 +2,7 @@ package com.lcwd.user.service.UserService.controllers;
 
 import com.lcwd.user.service.UserService.Entity.User;
 import com.lcwd.user.service.UserService.service.UserService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(user1);
     }
     @GetMapping("/{userId}")
+    @CircuitBreaker(name="ratingHotelBreaker",fallbackMethod = "ratingHotelFallback")
     public ResponseEntity<User> getSingleUser(@PathVariable String userId) {
         return ResponseEntity.ok(userService.findById(userId));
     }
